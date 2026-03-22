@@ -83,11 +83,8 @@ export function PersonPopup({ person, isOpen, onClose }: PersonPopupProps) {
                 <Text style={[styles.statValue, { color: '#e8a598' }]}>
                   {person.streak}
                 </Text>
-                <Text style={styles.statLabel}>Week Streak 🔥</Text>
-=======
                 <Text style={[styles.statValue, { color: '#e8a598' }]}>{person.streaks ?? 0}</Text>
                 <Text style={styles.statLabel}>Streak 🔥</Text>
->>>>>>> Stashed changes
               </View>
             </View>
           </View>
