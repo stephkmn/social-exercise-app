@@ -1,13 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
+import * as FileSystem from 'expo-file-system/legacy';
 import { router } from 'expo-router';
 import React, { useRef, useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const API_BASE_URL = 'http://localhost:8000';
 
 export default function CameraPage() {
   const [facing, setFacing] = useState<CameraType>('back');
   const [photo, setPhoto] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
 
@@ -20,6 +24,45 @@ export default function CameraPage() {
 
   const toggleFacing = () => {
     setFacing((prev) => (prev === 'back' ? 'front' : 'back'));
+  };
+
+  const handleUsePhoto = async () => {
+    if (!photo) return;
+    setUploading(true);
+    try {
+      let status: number;
+      let result: any;
+
+      if (Platform.OS === 'web') {
+        const blob = await fetch(photo).then((r) => r.blob());
+        const file = new File([blob], 'workout.jpg', { type: 'image/jpeg' });
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('user_id', 'default');
+        const res = await fetch(`${API_BASE_URL}/detect`, { method: 'POST', body: formData });
+        status = res.status;
+        result = await res.json();
+      } else {
+        const res = await FileSystem.uploadAsync(`${API_BASE_URL}/detect`, photo, {
+          httpMethod: 'POST',
+          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+          fieldName: 'file',
+          mimeType: 'image/jpeg',
+          parameters: { user_id: 'default' },
+        });
+        status = res.status;
+        result = JSON.parse(res.body);
+      }
+
+      if (status >= 400) throw new Error(result.error ?? `Server error: ${status}`);
+      if (!result.success) throw new Error(result.error ?? 'Detection failed');
+
+      router.push('/ai-labels');
+    } catch (err: any) {
+      Alert.alert('Upload Failed', err.message ?? 'Could not reach the server. Please try again.');
+    } finally {
+      setUploading(false);
+    }
   };
 
   // Permission loading
@@ -64,11 +107,12 @@ export default function CameraPage() {
               <Text style={styles.retakeText}>Retake</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.useButton}
-              onPress={() => router.push('/ai-labels')}
+              style={[styles.useButton, uploading && styles.useButtonDisabled]}
+              onPress={handleUsePhoto}
+              disabled={uploading}
             >
-              <Text style={styles.useText}>Use Photo</Text>
-              <Ionicons name="arrow-forward" size={20} color="#ffffff" />
+              <Text style={styles.useText}>{uploading ? 'Uploading...' : 'Use Photo'}</Text>
+              {!uploading && <Ionicons name="arrow-forward" size={20} color="#ffffff" />}
             </TouchableOpacity>
           </View>
         </View>
@@ -88,10 +132,10 @@ export default function CameraPage() {
         </View>
 
         <View style={styles.viewfinder}>
-          <CameraView ref={cameraRef} style={{ flex: 1 }} facing={facing}>
-            <Text style={styles.hint}>Show up. Snap. Done.</Text>
-          </CameraView>
+          <CameraView ref={cameraRef} style={{ flex: 1 }} facing={facing}/>
         </View>
+
+        <Text style={styles.hint}>Show up. Snap. Done.</Text>
 
         <View style={styles.controls}>
           <TouchableOpacity onPress={takePicture} style={styles.snapButtonOuter}>
@@ -140,10 +184,8 @@ const styles = StyleSheet.create({
   borderRight: { borderRightWidth: 1, borderRightColor: '#ffffff' },
   borderBottom: { borderBottomWidth: 1, borderBottomColor: '#ffffff' },
   hint: {
-    position: 'absolute',
-    bottom: 24,
     alignSelf: 'center',
-    color: 'rgba(255,255,255,0.5)',
+    color: '#94a3b8',
     fontSize: 14,
     fontWeight: '500',
     letterSpacing: 0.5,
@@ -193,6 +235,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   useText: { fontSize: 15, fontWeight: '700', color: '#ffffff' },
+  useButtonDisabled: { opacity: 0.6 },
   permissionInner: {
     flex: 1,
     alignItems: 'center',

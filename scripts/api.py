@@ -1,14 +1,24 @@
 # api.py
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, HttpUrl, Field
+from pydantic import BaseModel, Field, HttpUrl
 from pathlib import Path
+from supabase import create_client, Client
+from dotenv import load_dotenv
 import tempfile
-import requests
-import shutil
 import logging
+import os
 from datetime import datetime
 from typing import Optional, List, Dict, Any
+
+load_dotenv()
+
+SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_KEY = os.environ["SUPABASE_KEY"]
+BUCKET_NAME = os.environ["BUCKET_NAME"]
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Import your detection function
 from hybrid_3model_cv import detect_workout, MOCK_MODE
@@ -61,37 +71,20 @@ class HealthResponse(BaseModel):
 
 
 # ========== HELPER FUNCTIONS ==========
-def download_image(url: str, timeout: int = 10) -> str:
+def upload_to_supabase(file_bytes: bytes, user_id: str) -> str:
     """
-    Download image from URL to temp file.
-    Returns path to downloaded file.
-    Raises HTTPException on failure.
+    Upload image bytes to Supabase Storage.
+    Returns the public URL of the uploaded file.
     """
     try:
-        # Validate URL is an image
-        response = requests.head(url, timeout=5, allow_redirects=True)
-        content_type = response.headers.get("content-type", "").lower()
-        if not content_type.startswith("image/"):
-            raise ValueError(f"URL does not point to an image: {content_type}")
-        
-        # Download the image
-        response = requests.get(url, timeout=timeout, stream=True)
-        response.raise_for_status()
-        
-        # Save to temp file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
-            for chunk in response.iter_content(chunk_size=8192):
-                tmp.write(chunk)
-            return tmp.name
-            
-    except requests.exceptions.Timeout:
-        raise HTTPException(status_code=408, detail="Image download timed out")
-    except requests.exceptions.ConnectionError:
-        raise HTTPException(status_code=400, detail="Could not connect to image URL")
-    except requests.exceptions.HTTPError as e:
-        raise HTTPException(status_code=400, detail=f"Failed to fetch image: {e}")
+        file_name = f"workouts/{user_id}_{int(datetime.now().timestamp())}.jpg"
+        supabase.storage.from_(BUCKET_NAME).upload(
+            file_name, file_bytes, {"content-type": "image/jpeg"}
+        )
+        public_url = supabase.storage.from_(BUCKET_NAME).get_public_url(file_name)
+        return public_url
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Download error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Supabase upload failed: {str(e)}")
 
 
 def cleanup_temp_file(file_path: str):
@@ -114,60 +107,60 @@ async def health_check():
 
 
 @app.post("/detect", response_model=DetectResponse, status_code=200, tags=["Detection"])
-async def detect_workout_from_url(
-    request: DetectRequest,
-    background_tasks: BackgroundTasks
+async def detect_workout_from_upload(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    user_id: str = Form("default"),
+    mock: bool = Form(False),
+    include_raw: bool = Form(False),
 ):
     """
-    Detect workout equipment and background from an image URL.
-    
-    - **image_url**: Public URL of the workout photo (must be accessible)
-    - **mock**: Use mock mode for demo safety (returns fake but consistent results)
-    - **include_raw**: Include raw model outputs in response (debugging)
-    
-    Returns detection results with equipment, background location, and workout type.
+    Accept an image upload, store it in Supabase, then run workout detection.
     """
-    logger.info(f"Received detection request for: {request.image_url}")
-    
+    logger.info(f"Received detection request from user: {user_id}")
+
     try:
-        # Download image to temp file
-        temp_path = download_image(str(request.image_url))
-        
-        # Schedule cleanup after response
+        file_bytes = await file.read()
+
+        # 1. Upload to Supabase and get public URL
+        public_url = upload_to_supabase(file_bytes, user_id)
+        logger.info(f"Uploaded to Supabase: {public_url}")
+
+        # 2. Save to temp file for CV model
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+            tmp.write(file_bytes)
+            temp_path = tmp.name
+
         background_tasks.add_task(cleanup_temp_file, temp_path)
-        
-        # Override mock mode if requested
+
+        # 3. Override mock mode if requested
         original_mock = MOCK_MODE
-        if request.mock:
+        if mock:
             import hybrid_3model_cv
             hybrid_3model_cv.MOCK_MODE = True
-        
+
         try:
-            # Run detection
             result = detect_workout(temp_path)
-            
         finally:
-            # Restore original mock mode
-            if request.mock:
+            if mock:
                 hybrid_3model_cv.MOCK_MODE = original_mock
-        
-        # Remove raw outputs if not requested
-        if not request.include_raw and "raw_outputs" in result:
+
+        if not include_raw and "raw_outputs" in result:
             del result["raw_outputs"]
-        
-        # Determine status code
+
+        result["image_url"] = public_url
+
         status_code = 200 if result.get("success") else 422
         message = "Detection successful" if result.get("success") else "Detection completed with warnings"
-        
+
         return DetectResponse(
             success=result.get("success", False),
             status_code=status_code,
             message=message,
             data=result
         )
-        
+
     except HTTPException as e:
-        # Re-raise FastAPI HTTP exceptions
         raise e
     except Exception as e:
         logger.error(f"Detection failed: {e}", exc_info=True)
@@ -253,22 +246,12 @@ async def mock_detect_endpoint(request: DetectRequest):
 # ========== ERROR HANDLERS ==========
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
-    return DetectResponse(
-        success=False,
-        status_code=404,
-        message="Endpoint not found",
-        error="The requested resource does not exist"
-    )
+    return JSONResponse(status_code=404, content={"success": False, "status_code": 404, "message": "Endpoint not found", "error": "The requested resource does not exist"})
 
 
 @app.exception_handler(422)
 async def validation_error_handler(request, exc):
-    return DetectResponse(
-        success=False,
-        status_code=422,
-        message="Request validation failed",
-        error=str(exc)
-    )
+    return JSONResponse(status_code=422, content={"success": False, "status_code": 422, "message": "Request validation failed", "error": str(exc)})
 
 
 # ========== MAIN ==========
