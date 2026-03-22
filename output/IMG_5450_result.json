@@ -1,0 +1,40 @@
+{
+  "success": true,
+  "image": "IMG_5450.jpg",
+  "timestamp": "2026-03-21T18:36:21.834118",
+  "mock_mode": false,
+  "detections": [
+    {
+      "class": "person",
+      "confidence": 0.828,
+      "category": "person",
+      "source": "yolo26n-coco"
+    },
+    {
+      "class": "treadmill",
+      "confidence": 0.43,
+      "category": "cardio",
+      "source": "unknown"
+    },
+    {
+      "class": "chair",
+      "confidence": 0.416,
+      "category": "home_context",
+      "source": "yolo26n-coco"
+    },
+    {
+      "class": "chair",
+      "confidence": 0.383,
+      "category": "home_context",
+      "source": "yolo26n-coco"
+    }
+  ],
+  "background": {
+    "location": "unknown",
+    "confidence": 0.3,
+    "source": "fallback",
+    "reasoning": "Insufficient context to determine location"
+  },
+  "workout_type": "\ud83c\udfc3 Cardio (treadmill)",
+  "verified": true
+}

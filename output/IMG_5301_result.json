@@ -1,0 +1,52 @@
+{
+  "success": true,
+  "image": "IMG_5301.jpg",
+  "timestamp": "2026-03-21T18:36:38.426165",
+  "mock_mode": false,
+  "detections": [
+    {
+      "class": "person",
+      "confidence": 0.83,
+      "category": "person",
+      "source": "yolo26n-coco"
+    },
+    {
+      "class": "person",
+      "confidence": 0.792,
+      "category": "person",
+      "source": "yolo26n-coco"
+    },
+    {
+      "class": "person",
+      "confidence": 0.418,
+      "category": "person",
+      "source": "yolo26n-coco"
+    },
+    {
+      "class": "person",
+      "confidence": 0.309,
+      "category": "person",
+      "source": "yolo26n-coco"
+    },
+    {
+      "class": "skateboard",
+      "confidence": 0.303,
+      "category": "sports",
+      "source": "yolo26n-coco"
+    },
+    {
+      "class": "person",
+      "confidence": 0.279,
+      "category": "person",
+      "source": "yolo26n-coco"
+    }
+  ],
+  "background": {
+    "location": "outdoor",
+    "confidence": 0.6,
+    "source": "equipment_inference",
+    "reasoning": "Detected outdoor/sports context"
+  },
+  "workout_type": "\u26bd Sports (skateboard)",
+  "verified": true
+}

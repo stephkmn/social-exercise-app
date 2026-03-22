@@ -1,0 +1,22 @@
+{
+  "success": true,
+  "image": "006.jpg",
+  "timestamp": "2026-03-21T18:36:13.987627",
+  "mock_mode": false,
+  "detections": [
+    {
+      "class": "person",
+      "confidence": 0.851,
+      "category": "person",
+      "source": "yolo26n-coco"
+    }
+  ],
+  "background": {
+    "location": "unknown",
+    "confidence": 0.3,
+    "source": "fallback",
+    "reasoning": "Insufficient context to determine location"
+  },
+  "workout_type": "\ud83c\udfc3 General Workout",
+  "verified": true
+}
