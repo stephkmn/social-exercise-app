@@ -1,12 +1,14 @@
 # api.py
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, HttpUrl, Field
+from pydantic import BaseModel, Field, HttpUrl
 from pathlib import Path
+from supabase import create_client, Client
+from dotenv import load_dotenv
 import tempfile
-import requests
-import shutil
 import logging
+import os
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 import os
@@ -17,8 +19,16 @@ from PIL import Image
 # Load environment variables from .env file
 load_dotenv()
 
+load_dotenv()
+
+SUPABASE_URL = os.environ["SUPABASE_URL"]
+SUPABASE_KEY = os.environ["SUPABASE_KEY"]
+BUCKET_NAME = os.environ["BUCKET_NAME"]
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 # Import your detection function
-from hybrid_3model_cv import detect_workout
+from hybrid_3model_cv import MOCK_MODE, detect_workout
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -78,49 +88,20 @@ class HealthResponse(BaseModel):
 
 
 # ========== HELPER FUNCTIONS ==========
-def resize_image(image_path: str, max_size: int = 1024):
+def upload_to_supabase(file_bytes: bytes, user_id: str) -> str:
     """
-    Resize an image to a maximum size while maintaining aspect ratio.
-    Overwrites the original file.
-    """
-    try:
-        img = Image.open(image_path)
-        if img.width > max_size or img.height > max_size:
-            img.thumbnail((max_size, max_size))
-            img.save(image_path, "JPEG", quality=90)
-            logger.info(f"Image resized to fit within a {max_size}x{max_size} box.")
-    except Exception as e:
-        logger.warning(f"Could not resize image {image_path}: {e}")
-
-
-def download_image(url: str, timeout: int = 10) -> str:
-    """
-    Download image from URL to temp file.
-    Returns path to downloaded file.
-    Raises HTTPException on failure.
+    Upload image bytes to Supabase Storage.
+    Returns the public URL of the uploaded file.
     """
     try:
-        response = requests.head(url, timeout=5, allow_redirects=True)
-        content_type = response.headers.get("content-type", "").lower()
-        if not content_type.startswith("image/"):
-            raise ValueError(f"URL does not point to an image: {content_type}")
-        
-        response = requests.get(url, timeout=timeout, stream=True)
-        response.raise_for_status()
-        
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
-            for chunk in response.iter_content(chunk_size=8192):
-                tmp.write(chunk)
-            return tmp.name
-            
-    except requests.exceptions.Timeout:
-        raise HTTPException(status_code=408, detail="Image download timed out")
-    except requests.exceptions.ConnectionError:
-        raise HTTPException(status_code=400, detail="Could not connect to image URL")
-    except requests.exceptions.HTTPError as e:
-        raise HTTPException(status_code=400, detail=f"Failed to fetch image: {e}")
+        file_name = f"workouts/{user_id}_{int(datetime.now().timestamp())}.jpg"
+        supabase.storage.from_(BUCKET_NAME).upload(
+            file_name, file_bytes, {"content-type": "image/jpeg"}
+        )
+        public_url = supabase.storage.from_(BUCKET_NAME).get_public_url(file_name)
+        return public_url
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Download error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Supabase upload failed: {str(e)}")
 
 
 def cleanup_temp_file(file_path: str):
@@ -145,57 +126,59 @@ async def health_check():
 
 
 @app.post("/detect", response_model=DetectResponse, status_code=200, tags=["Detection"])
-async def detect_workout_from_url(
-    request: DetectRequest,
-    background_tasks: BackgroundTasks
+async def detect_workout_from_upload(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    user_id: str = Form("default"),
+    mock: bool = Form(False),
+    include_raw: bool = Form(False),
 ):
     """
-    Detect workout equipment from an image URL and save the result to the database.
+    Accept an image upload, store it in Supabase, then run workout detection.
     """
-    logger.info(f"Received detection request for user '{request.user_id}' with URL: {request.image_url}")
-    
-    try:
-        # 1. Download image to a temporary file
-        temp_path = download_image(str(request.image_url))
-        background_tasks.add_task(cleanup_temp_file, temp_path)
-        
-        # 2. Resize the image to prevent "413 Entity Too Large" errors from detection APIs
-        resize_image(temp_path)
-        
-        # 3. Run the detection model
-        result = detect_workout(temp_path, mock=request.mock)
-        
-        # 4. Save the workout record to Supabase
-        status = "passed" if result.get("success") else "failed"
-        detected_items = result.get("detected_items", [])
-        
-        try:
-            workout_record = {
-                "user_id": request.user_id,
-                "photo_url": str(request.image_url),
-                "cv_detected_items": detected_items,
-                "status": status,
-                "cv_result_json": result
-            }
-            supabase.table("workouts").insert(workout_record).execute()
-            logger.info(f"Successfully saved workout for user '{request.user_id}' to Supabase.")
-        except Exception as e:
-            logger.error(f"Supabase insert failed: {e}", exc_info=True)
+    logger.info(f"Received detection request from user: {user_id}")
 
-        # 5. Prepare and return the API response
-        if not request.include_raw and "raw_outputs" in result:
+    try:
+        file_bytes = await file.read()
+
+        # 1. Upload to Supabase and get public URL
+        public_url = upload_to_supabase(file_bytes, user_id)
+        logger.info(f"Uploaded to Supabase: {public_url}")
+
+        # 2. Save to temp file for CV model
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+            tmp.write(file_bytes)
+            temp_path = tmp.name
+
+        background_tasks.add_task(cleanup_temp_file, temp_path)
+
+        # 3. Override mock mode if requested
+        original_mock = MOCK_MODE
+        if mock:
+            import hybrid_3model_cv
+            hybrid_3model_cv.MOCK_MODE = True
+
+        try:
+            result = detect_workout(temp_path)
+        finally:
+            if mock:
+                hybrid_3model_cv.MOCK_MODE = original_mock
+
+        if not include_raw and "raw_outputs" in result:
             del result["raw_outputs"]
-            
+
+        result["image_url"] = public_url
+
         status_code = 200 if result.get("success") else 422
         message = "Detection successful" if result.get("success") else "Detection completed with warnings"
-        
+
         return DetectResponse(
             success=result.get("success", False),
             status_code=status_code,
             message=message,
             data=result
         )
-        
+
     except HTTPException as e:
         raise e
     except Exception as e:
@@ -244,22 +227,12 @@ async def mock_detect_endpoint(request: DetectRequest):
 # ========== ERROR HANDLERS ==========
 @app.exception_handler(404)
 async def not_found_handler(request, exc):
-    return DetectResponse(
-        success=False,
-        status_code=404,
-        message="Endpoint not found",
-        error="The requested resource does not exist"
-    )
+    return JSONResponse(status_code=404, content={"success": False, "status_code": 404, "message": "Endpoint not found", "error": "The requested resource does not exist"})
 
 
 @app.exception_handler(422)
 async def validation_error_handler(request, exc):
-    return DetectResponse(
-        success=False,
-        status_code=422,
-        message="Request validation failed",
-        error=str(exc)
-    )
+    return JSONResponse(status_code=422, content={"success": False, "status_code": 422, "message": "Request validation failed", "error": str(exc)})
 
 
 # ========== MAIN ==========
