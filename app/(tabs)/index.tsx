@@ -10,7 +10,22 @@ export default function FeedPage() {
 
   useEffect(() => {
     const fetchFeed = async () => {
-      // ... existing fetchFeed logic ...
+      try {
+        const { data, error } = await supabase
+          .from('workouts') // Assuming 'workouts' is the table for feed items
+          .select('*, users(id, display_name, avatar_url)') // Select all from workouts and specific fields from users
+          .order('created_at', { ascending: false }); // Order by creation date
+
+        if (error) {
+          console.error('Error fetching feed:', error);
+        } else {
+          setFeed(data || []);
+        }
+      } catch (error) {
+        console.error('Unexpected error fetching feed:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchFeed();
