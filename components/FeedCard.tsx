@@ -1,43 +1,53 @@
 import React from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import timeAgo from 'javascript-time-ago';
+import en from 'javascript-time-ago/locale/en';
+
+timeAgo.addDefaultLocale(en);
+const timeAgoFormatter = new timeAgo('en-US');
 
 interface FeedCardProps {
   item: {
     id: string;
-    user: { name: string; avatar: string };
-    timeAgo: string;
-    image: string;
-    labels: string[];
-    workoutType: string;
-    encouragement: string;
+    created_at: string;
+    photo_url: string;
+    cv_detected_items: string[];
+    users: {
+      id: string;
+      display_name: string;
+      avatar_url: string;
+    } | null;
   };
 }
 
 export function FeedCard({ item }: FeedCardProps) {
+  const userName = item.users ? item.users.display_name : 'Anonymous';
+  const avatarUrl = item.users ? item.users.avatar_url : '🤷';
+
   return (
     <View style={styles.card}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{item.user.avatar}</Text>
+            <Text style={styles.avatarText}>{avatarUrl}</Text>
           </View>
           <View>
-            <Text style={styles.userName}>{item.user.name}</Text>
-            <Text style={styles.timeAgo}>{item.timeAgo}</Text>
+            <Text style={styles.userName}>{userName}</Text>
+            <Text style={styles.timeAgo}>{timeAgoFormatter.format(new Date(item.created_at))}</Text>
           </View>
         </View>
         <View style={styles.typeBadge}>
-          <Text style={styles.typeBadgeText}>{item.workoutType}</Text>
+          <Text style={styles.typeBadgeText}>Workout</Text>
         </View>
       </View>
 
       {/* Image */}
       <View style={styles.imageContainer}>
-        <Image source={{ uri: item.image }} style={styles.image} />
+        <Image source={{ uri: item.photo_url }} style={styles.image} />
         <View style={styles.labelsOverlay}>
-          {item.labels.map((label, idx) => (
+          {item.cv_detected_items && item.cv_detected_items.map((label, idx) => (
             <View key={idx} style={styles.label}>
               <Text style={styles.labelText}>{label}</Text>
             </View>
@@ -47,7 +57,7 @@ export function FeedCard({ item }: FeedCardProps) {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.encouragement}>{item.encouragement}</Text>
+        <Text style={styles.encouragement}>Keep up the great work!</Text>
         <View style={styles.actions}>
           <TouchableOpacity style={styles.actionButton}>
             <Ionicons name="heart-outline" size={16} color="#94a3b8" />
