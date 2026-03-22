@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 0.5,
   },
-  controls: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  controls: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 32 },
   snapButtonOuter: {
     width: 96,
     height: 96,
