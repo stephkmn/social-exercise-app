@@ -22,7 +22,7 @@ export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [displayName, setDisplayName] = useState(''); // Added displayName state
+  // Removed displayName state
   const [loading, setLoading] = useState(false);
 
   const colorScheme = useColorScheme();
@@ -41,27 +41,12 @@ export default function AuthScreen() {
     }
 
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          display_name: displayName,
-        },
-      },
+    // Instead of calling supabase.auth.signUp, navigate to the next page
+    router.push({
+      pathname: '/create-profile',
+      params: { email, password },
     });
-
-    if (error) {
-      Alert.alert('Sign Up Error', error.message);
-    } else {
-      Alert.alert('Success', 'Please check your email to confirm your account.');
-      // Clear form fields after successful sign-up
-      setEmail('');
-      setPassword('');
-      setConfirmPassword('');
-      setDisplayName('');
-    }
-    setLoading(false);
+    setLoading(false); // Reset loading after navigation
   };
 
   const handleSignIn = async () => {
@@ -110,16 +95,7 @@ export default function AuthScreen() {
             value={email}
             onChangeText={setEmail}
           />
-          {authMode === 'signup' && ( // Display Name input moved here
-            <TextInput
-              style={styles.input}
-              placeholder="Display Name"
-              placeholderTextColor={Colors.textFaint}
-              autoCapitalize="words"
-              value={displayName}
-              onChangeText={setDisplayName}
-            />
-          )}
+          {/* Removed Display Name input */}
           <TextInput
             style={styles.input}
             placeholder="Password"
