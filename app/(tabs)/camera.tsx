@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
-import * as FileSystem from 'expo-file-system/legacy';
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const API_BASE_URL = 'http://localhost:8000';
+const devHost = Constants.expoConfig?.hostUri?.split(':').shift();
+const API_BASE_URL = devHost ? `http://${devHost}:8000` : 'http://localhost:8000';
 
 export default function CameraPage() {
   const [facing, setFacing] = useState<CameraType>('back');
@@ -29,6 +30,8 @@ export default function CameraPage() {
   const handleUsePhoto = async () => {
     if (!photo) return;
     setUploading(true);
+    console.log('[upload] API_BASE_URL:', API_BASE_URL);
+    console.log('[upload] photo URI:', photo);
     try {
       let status: number;
       let result: any;
@@ -39,19 +42,19 @@ export default function CameraPage() {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('user_id', 'default');
+        console.log('[upload] sending web fetch...');
         const res = await fetch(`${API_BASE_URL}/detect`, { method: 'POST', body: formData });
         status = res.status;
         result = await res.json();
       } else {
-        const res = await FileSystem.uploadAsync(`${API_BASE_URL}/detect`, photo, {
-          httpMethod: 'POST',
-          uploadType: FileSystem.FileSystemUploadType.MULTIPART,
-          fieldName: 'file',
-          mimeType: 'image/jpeg',
-          parameters: { user_id: 'default' },
-        });
+        const formData = new FormData();
+        formData.append('file', { uri: photo, name: 'workout.jpg', type: 'image/jpeg' } as any);
+        formData.append('user_id', 'default');
+        console.log('[upload] sending native fetch...');
+        const res = await fetch(`${API_BASE_URL}/detect`, { method: 'POST', body: formData });
+        console.log('[upload] response status:', res.status);
         status = res.status;
-        result = JSON.parse(res.body);
+        result = await res.json();
       }
 
       if (status >= 400) throw new Error(result.error ?? `Server error: ${status}`);
