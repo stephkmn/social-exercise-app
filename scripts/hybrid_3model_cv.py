@@ -8,13 +8,18 @@ from datetime import datetime
 import torch
 from torchvision import models, transforms
 from PIL import Image
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 print("🏋️  Hybrid CV: Equipment + Background + yolo26n + COCO Fallback")
 print("=" * 70)
 
 # ========== CONFIG ==========
 MOCK_MODE = False  # ← Set True for demo safety
-API_KEY = ""
+API_KEY = os.getenv("ROBOFLOW_API_KEY", "")
 
 # Model 1: Your custom gym objects (PRIMARY)
 CUSTOM_MODEL = {

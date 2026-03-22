@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+requests
+python-dotenv
+inference-sdk
+ultralytics
+torch
+torchvision
+Pillow
