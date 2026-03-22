@@ -1,25 +1,83 @@
-import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
-  View,
+  Alert,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  StyleSheet,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { FRIENDS } from '../lib/mockData';
+import { supabase } from '../lib/supabase';
+
+interface UserProfile {
+  id: string;
+  display_name: string;
+}
 
 export default function AddGroupPage() {
-  const [type, setType] = useState<'cooperative' | 'competitive'>('cooperative');
+  const [type, setType] = useState<'collaborative' | 'competitive'>('collaborative');
+  const [squadName, setSquadName] = useState('');
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
+  const [weeklyGoal, setWeeklyGoal] = useState<number>(10);
+  const [punishmentText, setPunishmentText] = useState('');
+  const [users, setUsers] = useState<UserProfile[]>([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, display_name');
+      if (error) {
+        console.error('Failed to fetch users:', error.message);
+      } else {
+        setUsers(data ?? []);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const toggleFriend = (id: string) => {
     setSelectedFriends((prev) =>
       prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
     );
+  };
+
+  const incrementGoal = () => setWeeklyGoal((prev) => Math.min(prev + 1, 30));
+  const decrementGoal = () => setWeeklyGoal((prev) => Math.max(prev - 1, 1));
+
+  const handleCreate = async () => {
+    if (!squadName.trim()) {
+      Alert.alert('Required', 'Please enter a squad name');
+      return;
+    }
+    if (type === 'collaborative' && weeklyGoal < 1) {
+      Alert.alert('Invalid Goal', 'Please set a weekly goal of at least 1');
+      return;
+    }
+    if (type === 'competitive' && !punishmentText.trim()) {
+      Alert.alert('Required', 'Please enter a punishment');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('squads').insert({
+        squad_name: squadName.trim(),
+        squad_type: type,
+        squad_members: selectedFriends,
+        per_week: type === 'collaborative' ? weeklyGoal : null,
+        punishment: type === 'competitive' ? punishmentText.trim() : null,
+      });
+
+      if (error) throw error;
+
+      router.navigate('/(tabs)/leaderboard');
+    } catch (err: any) {
+      Alert.alert('Error', err?.message ?? 'Something went wrong');
+    }
   };
 
   return (
@@ -43,6 +101,8 @@ export default function AddGroupPage() {
               placeholder="e.g. Morning Crew"
               placeholderTextColor="#94a3b8"
               style={styles.nameInput}
+              value={squadName}
+              onChangeText={setSquadName}
             />
           </View>
         </View>
@@ -54,16 +114,16 @@ export default function AddGroupPage() {
             <TouchableOpacity
               style={[
                 styles.vibeCard,
-                type === 'cooperative' ? styles.vibeCardCooperative : styles.vibeCardInactive,
+                type === 'collaborative' ? styles.vibeCardCooperative : styles.vibeCardInactive,
               ]}
-              onPress={() => setType('cooperative')}
+              onPress={() => setType('collaborative')}
             >
               <View
                 style={[
                   styles.vibeIcon,
                   {
                     backgroundColor:
-                      type === 'cooperative'
+                      type === 'collaborative'
                         ? 'rgba(143,188,143,0.1)'
                         : '#f1f5f9',
                   },
@@ -72,10 +132,10 @@ export default function AddGroupPage() {
                 <Ionicons
                   name="radio-button-on"
                   size={20}
-                  color={type === 'cooperative' ? '#8fbc8f' : '#94a3b8'}
+                  color={type === 'collaborative' ? '#8fbc8f' : '#94a3b8'}
                 />
               </View>
-              <Text style={[styles.vibeTitle, type !== 'cooperative' && styles.vibeTitleInactive]}>
+              <Text style={[styles.vibeTitle, type !== 'collaborative' && styles.vibeTitleInactive]}>
                 Cooperative
               </Text>
               <Text style={styles.vibeDesc}>Work together towards a shared goal.</Text>
@@ -113,27 +173,82 @@ export default function AddGroupPage() {
           </View>
         </View>
 
+        {/* ← UPDATED: Conditional Challenge/Punishment Input */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>
+            {type === 'collaborative' ? 'Weekly Goal' : 'Weekly Punishment'}
+          </Text>
+          
+          {type === 'collaborative' ? (
+            // 🎯 Numeric Stepper for Cooperative
+            <View style={styles.stepperCard}>
+              <TouchableOpacity 
+                style={styles.stepperButton} 
+                onPress={decrementGoal}
+                disabled={weeklyGoal <= 1}
+              >
+                <Ionicons 
+                  name="remove" 
+                  size={24} 
+                  color={weeklyGoal <= 1 ? '#cbd5e1' : '#8fbc8f'} 
+                />
+              </TouchableOpacity>
+              
+              <View style={styles.stepperValue}>
+                <Text style={styles.stepperNumber}>{weeklyGoal}</Text>
+                <Text style={styles.stepperLabel}>sessions total/week</Text>
+              </View>
+              
+              <TouchableOpacity 
+                style={styles.stepperButton} 
+                onPress={incrementGoal}
+                disabled={weeklyGoal >= 30}
+              >
+                <Ionicons 
+                  name="add" 
+                  size={24} 
+                  color={weeklyGoal >= 30 ? '#cbd5e1' : '#8fbc8f'} 
+                />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            // 💀 Text Input for Competitive
+            <View style={styles.challengeCard}>
+              <View style={styles.challengeIcon}>
+                <Ionicons name="skull" size={20} color="#e8a598" />
+              </View>
+              <TextInput
+                placeholder="e.g. Buy the winner lunch"
+                placeholderTextColor="#94a3b8"
+                style={styles.challengeInput}
+                value={punishmentText}
+                onChangeText={setPunishmentText}
+              />
+            </View>
+          )}
+        </View>
+
         {/* Add Members */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Add Members</Text>
           <View style={styles.friendsList}>
-            {FRIENDS.map((friend, idx) => {
-              const isSelected = selectedFriends.includes(friend.id);
+            {users.map((user, idx) => {
+              const isSelected = selectedFriends.includes(user.id);
               return (
                 <TouchableOpacity
-                  key={friend.id}
+                  key={user.id}
                   style={[
                     styles.friendRow,
-                    idx !== FRIENDS.length - 1 && styles.friendRowBorder,
+                    idx !== users.length - 1 && styles.friendRowBorder,
                     isSelected && styles.friendRowActive,
                   ]}
-                  onPress={() => toggleFriend(friend.id)}
+                  onPress={() => toggleFriend(user.id)}
                 >
                   <View style={styles.friendLeft}>
                     <View style={styles.friendAvatar}>
-                      <Text style={styles.friendEmoji}>{friend.avatar}</Text>
+                      <Text style={styles.friendEmoji}>🧑</Text>
                     </View>
-                    <Text style={styles.friendName}>{friend.name}</Text>
+                    <Text style={styles.friendName}>{user.display_name}</Text>
                   </View>
                   <View style={[styles.selectCircle, isSelected && styles.selectCircleActive]}>
                     {isSelected && <View style={styles.selectDot} />}
@@ -144,7 +259,7 @@ export default function AddGroupPage() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.createButton} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
           <Text style={styles.createButtonText}>Create Squad</Text>
         </TouchableOpacity>
 
@@ -247,6 +362,82 @@ const styles = StyleSheet.create({
   vibeTitle: { fontSize: 13, fontWeight: '700', color: '#1e293b', marginBottom: 4 },
   vibeTitleInactive: { color: '#64748b' },
   vibeDesc: { fontSize: 10, color: '#94a3b8', fontWeight: '500', lineHeight: 14 },
+  
+  // ← UPDATED: Stepper Styles for Cooperative
+  stepperCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  stepperButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#faf8f5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  stepperValue: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  stepperNumber: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#8fbc8f',
+  },
+  stepperLabel: {
+    fontSize: 11,
+    color: '#94a3b8',
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  
+  // Text Input for Competitive
+  challengeCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  challengeIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#faf8f5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
+  },
+  challengeInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1e293b',
+  },
+  
   friendsList: {
     backgroundColor: '#ffffff',
     borderRadius: 16,

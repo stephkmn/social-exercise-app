@@ -74,7 +74,25 @@ webapp-version/            # Original React/Vite mockup (reference only)
 
 ```bash
 npm install
+```
+
+**Expo Go (physical device)**
+```bash
+# Frontend
 npx expo start
+
+# Backend
+uvicorn api:app --host 0.0.0.0 --port 8000
+```
+> `--host 0.0.0.0` is required so the phone can reach the server over your local network.
+
+**Browser**
+```bash
+# Frontend
+npx expo start
+
+# Backend
+uvicorn api:app --reload
 ```
 
 Then press `i` for iOS simulator, `a` for Android, or scan the QR code with Expo Go.
