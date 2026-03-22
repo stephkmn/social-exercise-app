@@ -57,7 +57,18 @@ export default function CameraPage() {
       if (status >= 400) throw new Error(result.error ?? `Server error: ${status}`);
       if (!result.success) throw new Error(result.error ?? 'Detection failed');
 
-      router.push('/ai-labels');
+      const labels: string[] = (result.data?.detections ?? [])
+        .filter((d: any) => d.category !== 'person')
+        .map((d: any) => d.class);
+
+      router.push({
+        pathname: '/ai-labels',
+        params: {
+          labels: JSON.stringify(labels),
+          imageUrl: result.data?.image_url ?? '',
+          timestamp: result.timestamp ?? new Date().toISOString(),
+        },
+      });
     } catch (err: any) {
       Alert.alert('Upload Failed', err.message ?? 'Could not reach the server. Please try again.');
     } finally {
