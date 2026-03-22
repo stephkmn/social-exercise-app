@@ -175,7 +175,7 @@ async def detect_workout_from_upload(
         if status_code == 200 and not mock:
             # Insert workout record to Supabase
             data, error = supabase.table('workouts').insert({
-                "user_id": user_id,
+                "user_id": "00000000-0000-0000-0000-000000000000",
                 "photo_url": public_url,
                 "status": "passed",
                 "cv_detected_items": [item["class"] for item in result["detections"]],
