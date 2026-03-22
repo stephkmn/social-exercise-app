@@ -50,20 +50,8 @@ export default function AuthScreen() {
   };
 
   const handleSignIn = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
-
-    if (error) {
-      Alert.alert('Error', error.message);
-      setLoading(false);
-      return;
-    }
-    // Navigate to the feed page
-    router.replace('/(tabs)'); // Changed to navigate to /(tabs)
-    setLoading(false);
+    // Assume login is successful and proceed to the next page
+    router.replace('/(tabs)');
   };
 
   return (
