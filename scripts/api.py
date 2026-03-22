@@ -172,6 +172,17 @@ async def detect_workout_from_upload(
         status_code = 200 if result.get("success") else 422
         message = "Detection successful" if result.get("success") else "Detection completed with warnings"
 
+        if status_code == 200 and not mock:
+            const {error} = await supabase:
+                .from('workouts')
+                .insert({
+                    user_id: user_id,
+                    photo_url: public_url,
+                    status: "passed",
+                    cv_detected_items: [item["class"] for item in result["detections"]]
+                    cv_result_json: str(result)
+                })
+
         return DetectResponse(
             success=result.get("success", False),
             status_code=status_code,
