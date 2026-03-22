@@ -1,17 +1,23 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
   Modal,
   StyleSheet,
+  Text,
+  TouchableOpacity,
   TouchableWithoutFeedback,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { type Member } from '../lib/mockData';
+export interface Profile {
+  id: string;
+  display_name: string;
+  sessions: number;
+  streaks: number;
+}
 
 interface PersonPopupProps {
-  person: Member | null;
+  person: Profile | null;
+
   isOpen: boolean;
   onClose: () => void;
 }
@@ -38,9 +44,10 @@ export function PersonPopup({ person, isOpen, onClose }: PersonPopupProps) {
 
           <View style={styles.personHeader}>
             <View style={styles.personAvatar}>
-              <Text style={styles.personAvatarText}>{person.avatar}</Text>
+              <Text style={styles.personAvatarText}>🧑</Text>
             </View>
-            <Text style={styles.personName}>{person.name}</Text>
+            <Text style={styles.personName}>{person.display_name}</Text>
+
             <Text style={styles.personSubtitle}>Consistency is their superpower ✨</Text>
           </View>
 
@@ -73,8 +80,8 @@ export function PersonPopup({ person, isOpen, onClose }: PersonPopupProps) {
                 <Text style={styles.statLabel}>Sessions Logged</Text>
               </View>
               <View style={styles.statCardCoral}>
-                <Text style={[styles.statValue, { color: '#e8a598' }]}>
-                  {person.streak}
+                <Text style={[styles.statValue, { color: '#e8a598' }]}>                  {person.streaks ?? 0}
+
                 </Text>
                 <Text style={styles.statLabel}>Week Streak 🔥</Text>
               </View>
