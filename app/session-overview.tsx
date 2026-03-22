@@ -1,18 +1,28 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { GROUPS } from '../lib/mockData';
 
+function formatTimestamp(iso: string): string {
+  const date = new Date(iso);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (isToday) return `Today at ${time}`;
+  return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })} at ${time}`;
+}
+
 export default function SessionOverviewPage() {
+  const { labels: labelsParam, imageUrl, timestamp } = useLocalSearchParams<{
+    labels: string;
+    imageUrl: string;
+    timestamp: string;
+  }>();
+  const labels: string[] = labelsParam ? JSON.parse(labelsParam) : [];
+  const formattedTime = timestamp ? formatTimestamp(timestamp) : '';
+
   const [selectedGroups, setSelectedGroups] = useState<string[]>(
     GROUPS.map((g) => g.id)
   );
@@ -52,19 +62,15 @@ export default function SessionOverviewPage() {
         {/* Summary Card */}
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
-            <Image
-              source={{
-                uri: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=600&h=600',
-              }}
-              style={styles.summaryImage}
-            />
+            {imageUrl ? (
+              <Image source={{ uri: imageUrl }} style={styles.summaryImage} />
+            ) : (
+              <View style={[styles.summaryImage, styles.summaryImagePlaceholder]} />
+            )}
             <View style={styles.summaryInfo}>
-              <View style={styles.workoutBadge}>
-                <Text style={styles.workoutBadgeText}>Yoga 🧘</Text>
-              </View>
-              <Text style={styles.summaryTime}>Today at 08:30 AM</Text>
+              <Text style={styles.summaryTime}>{formattedTime}</Text>
               <View style={styles.summaryLabels}>
-                {['Yoga Mat', 'Morning'].map((l) => (
+                {labels.map((l) => (
                   <View key={l} style={styles.summaryLabel}>
                     <Text style={styles.summaryLabelText}>{l}</Text>
                   </View>
@@ -179,6 +185,9 @@ const styles = StyleSheet.create({
     height: 96,
     borderRadius: 16,
     backgroundColor: '#f1f5f9',
+  },
+  summaryImagePlaceholder: {
+    backgroundColor: '#e2e8f0',
   },
   summaryInfo: { flex: 1, justifyContent: 'center' },
   workoutBadge: {
