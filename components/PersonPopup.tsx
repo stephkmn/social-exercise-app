@@ -73,10 +73,15 @@ export function PersonPopup({ person, isOpen, onClose }: PersonPopupProps) {
                 <Text style={styles.statLabel}>Sessions Logged</Text>
               </View>
               <View style={styles.statCardCoral}>
+<<<<<<< Updated upstream
                 <Text style={[styles.statValue, { color: '#e8a598' }]}>
                   {person.streak}
                 </Text>
                 <Text style={styles.statLabel}>Week Streak 🔥</Text>
+=======
+                <Text style={[styles.statValue, { color: '#e8a598' }]}>{person.streaks ?? 0}</Text>
+                <Text style={styles.statLabel}>Streak 🔥</Text>
+>>>>>>> Stashed changes
               </View>
             </View>
           </View>
@@ -154,6 +159,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: 'rgba(143,188,143,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   statCardCoral: {
     flex: 1,
@@ -162,7 +169,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: 'rgba(232,165,152,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  statValue: { fontSize: 32, fontWeight: '700', marginBottom: 4 },
-  statLabel: { fontSize: 11, fontWeight: '500', color: '#475569' },
+  statValue: { fontSize: 32, fontWeight: '700', marginBottom: 4, textAlign: 'center' },
+  statLabel: { fontSize: 11, fontWeight: '500', color: '#475569', textAlign: 'center' },
 });
