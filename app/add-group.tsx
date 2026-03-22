@@ -1,0 +1,307 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { FRIENDS } from '../lib/mockData';
+
+export default function AddGroupPage() {
+  const [type, setType] = useState<'cooperative' | 'competitive'>('cooperative');
+  const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
+
+  const toggleFriend = (id: string) => {
+    setSelectedFriends((prev) =>
+      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={24} color="#475569" />
+          </TouchableOpacity>
+          <Text style={styles.title}>New Squad</Text>
+        </View>
+
+        {/* Squad Name */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Squad Name</Text>
+          <View style={styles.nameCard}>
+            <View style={styles.nameIcon}>
+              <Ionicons name="people" size={20} color="#94a3b8" />
+            </View>
+            <TextInput
+              placeholder="e.g. Morning Crew"
+              placeholderTextColor="#94a3b8"
+              style={styles.nameInput}
+            />
+          </View>
+        </View>
+
+        {/* Vibe */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Vibe</Text>
+          <View style={styles.vibeGrid}>
+            <TouchableOpacity
+              style={[
+                styles.vibeCard,
+                type === 'cooperative' ? styles.vibeCardCooperative : styles.vibeCardInactive,
+              ]}
+              onPress={() => setType('cooperative')}
+            >
+              <View
+                style={[
+                  styles.vibeIcon,
+                  {
+                    backgroundColor:
+                      type === 'cooperative'
+                        ? 'rgba(143,188,143,0.1)'
+                        : '#f1f5f9',
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="radio-button-on"
+                  size={20}
+                  color={type === 'cooperative' ? '#8fbc8f' : '#94a3b8'}
+                />
+              </View>
+              <Text style={[styles.vibeTitle, type !== 'cooperative' && styles.vibeTitleInactive]}>
+                Cooperative
+              </Text>
+              <Text style={styles.vibeDesc}>Work together towards a shared goal.</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.vibeCard,
+                type === 'competitive' ? styles.vibeCardCompetitive : styles.vibeCardInactive,
+              ]}
+              onPress={() => setType('competitive')}
+            >
+              <View
+                style={[
+                  styles.vibeIcon,
+                  {
+                    backgroundColor:
+                      type === 'competitive'
+                        ? 'rgba(232,165,152,0.1)'
+                        : '#f1f5f9',
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="trophy"
+                  size={20}
+                  color={type === 'competitive' ? '#e8a598' : '#94a3b8'}
+                />
+              </View>
+              <Text style={[styles.vibeTitle, type !== 'competitive' && styles.vibeTitleInactive]}>
+                Competitive
+              </Text>
+              <Text style={styles.vibeDesc}>Loser faces the weekly punishment.</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Add Members */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>Add Members</Text>
+          <View style={styles.friendsList}>
+            {FRIENDS.map((friend, idx) => {
+              const isSelected = selectedFriends.includes(friend.id);
+              return (
+                <TouchableOpacity
+                  key={friend.id}
+                  style={[
+                    styles.friendRow,
+                    idx !== FRIENDS.length - 1 && styles.friendRowBorder,
+                    isSelected && styles.friendRowActive,
+                  ]}
+                  onPress={() => toggleFriend(friend.id)}
+                >
+                  <View style={styles.friendLeft}>
+                    <View style={styles.friendAvatar}>
+                      <Text style={styles.friendEmoji}>{friend.avatar}</Text>
+                    </View>
+                    <Text style={styles.friendName}>{friend.name}</Text>
+                  </View>
+                  <View style={[styles.selectCircle, isSelected && styles.selectCircleActive]}>
+                    {isSelected && <View style={styles.selectDot} />}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.createButton} onPress={() => router.back()}>
+          <Text style={styles.createButtonText}>Create Squad</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 32 }} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#faf8f5' },
+  scroll: { flex: 1, paddingHorizontal: 24 },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    paddingTop: 16,
+    marginBottom: 32,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  title: { fontSize: 24, fontWeight: '700', color: '#1e293b' },
+  section: { marginBottom: 32 },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  nameCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  nameIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: '#faf8f5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
+  },
+  nameInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1e293b',
+  },
+  vibeGrid: { flexDirection: 'row', gap: 12 },
+  vibeCard: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 2,
+  },
+  vibeCardCooperative: {
+    borderColor: '#8fbc8f',
+    backgroundColor: '#ffffff',
+  },
+  vibeCardCompetitive: {
+    borderColor: '#e8a598',
+    backgroundColor: '#ffffff',
+  },
+  vibeCardInactive: {
+    borderColor: '#e2e8f0',
+    backgroundColor: 'transparent',
+    opacity: 0.6,
+  },
+  vibeIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  vibeTitle: { fontSize: 13, fontWeight: '700', color: '#1e293b', marginBottom: 4 },
+  vibeTitleInactive: { color: '#64748b' },
+  vibeDesc: { fontSize: 10, color: '#94a3b8', fontWeight: '500', lineHeight: 14 },
+  friendsList: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    overflow: 'hidden',
+  },
+  friendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  friendRowBorder: { borderBottomWidth: 1, borderBottomColor: '#f8fafc' },
+  friendRowActive: { backgroundColor: '#faf8f5' },
+  friendLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  friendAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+  },
+  friendEmoji: { fontSize: 20 },
+  friendName: { fontSize: 14, fontWeight: '700', color: '#1e293b' },
+  selectCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#cbd5e1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectCircleActive: { backgroundColor: '#8fbc8f', borderColor: '#8fbc8f' },
+  selectDot: { width: 10, height: 10, backgroundColor: '#ffffff', borderRadius: 5 },
+  createButton: {
+    backgroundColor: '#8fbc8f',
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  createButtonText: { fontSize: 17, fontWeight: '700', color: '#ffffff' },
+});
