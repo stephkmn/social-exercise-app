@@ -10,36 +10,43 @@ export default function FeedPage() {
 
   useEffect(() => {
     const fetchFeed = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('workouts')
-          .select(`
-            id,
-            created_at,
-            photo_url,
-            cv_detected_items,
-            users (
-              id,
-              display_name,
-              avatar_url
-            )
-          `)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          throw error;
-        }
-
-        setFeed(data);
-      } catch (error) {
-        console.error('Error fetching feed:', error);
-      } finally {
-        setLoading(false);
-      }
+      // ... existing fetchFeed logic ...
     };
 
     fetchFeed();
   }, []);
+
+  // New useEffect for real-time profile updates
+  useEffect(() => {
+    const profileUpdates = supabase
+      .channel('public:profiles')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, payload => {
+        console.log('Profile updated and pushed!', payload.new);
+        const updatedProfile = payload.new;
+
+        setFeed(currentFeed =>
+          currentFeed.map(item => {
+            // Check if the workout's user matches the updated profile
+            if (item.users && item.users.id === updatedProfile.id) {
+              return {
+                ...item,
+                users: {
+                  ...item.users,
+                  display_name: updatedProfile.display_name,
+                  avatar_url: updatedProfile.avatar_url,
+                },
+              };
+            }
+            return item;
+          })
+        );
+      })
+      .subscribe();
+
+    return () => {
+      profileUpdates.unsubscribe();
+    };
+  }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
 
   if (loading) {
     return (
