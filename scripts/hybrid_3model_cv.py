@@ -558,9 +558,10 @@ def mock_detect_all(image_path: str) -> dict:
     }
 
 
-def detect_workout(image_path: str) -> dict:
+def detect_workout(image_path: str, mock: bool = False) -> dict:
     """
     Main detection function.
+    Accepts a 'mock' parameter to override global MOCK_MODE.
     
     Returns JSON with SEPARATE fields:
     - "detections": list of equipment detected (custom + COCO classes)
@@ -569,7 +570,10 @@ def detect_workout(image_path: str) -> dict:
     print(f"\n📸 Processing: {Path(image_path).name}")
     print("-" * 70)
     
-    if MOCK_MODE:
+    # Prioritize the 'mock' parameter passed to the function
+    is_mock = mock or MOCK_MODE
+    
+    if is_mock:
         mock_result = mock_detect_all(image_path)
         equipment_detections = mock_result["equipment"]
         background_info = mock_result["background"]
@@ -609,22 +613,25 @@ def detect_workout(image_path: str) -> dict:
         workout_type = infer_workout_type(equipment_detections)
     
     # === BUILD FINAL RESULT WITH SEPARATE FIELDS ===
+    # ✅ NEW: Create a simple list of detected item names for Supabase
+    detected_item_names = sorted(list(set([d.get("class") for d in equipment_detections])))
+
     result = {
         "success": True,
         "image": Path(image_path).name,
         "timestamp": datetime.now().isoformat(),
-        "mock_mode": MOCK_MODE,
+        "mock_mode": is_mock,
         
-        # 🔹 SEPARATE FIELD: Equipment detections (custom + COCO classes)
+        # The original, detailed list of detection objects
         "detections": sorted(
             equipment_detections, 
             key=lambda x: -x["confidence"]
         ),
         
-        # 🔹 SEPARATE FIELD: Background/location info (distinct from detections)
-        "background": background_info,
+        # ✅ NEW: The simple list of strings for Supabase
+        "detected_items": detected_item_names,
         
-        # Derived fields
+        "background": background_info,
         "workout_type": workout_type,
         "verified": any(d["class"].lower() == "person" for d in equipment_detections)
     }

@@ -9,13 +9,28 @@ import shutil
 import logging
 from datetime import datetime
 from typing import Optional, List, Dict, Any
+import os
+from supabase import create_client, Client
+from dotenv import load_dotenv
+from PIL import Image
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Import your detection function
-from hybrid_3model_cv import detect_workout, MOCK_MODE
+from hybrid_3model_cv import detect_workout
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# ========== SUPABASE CLIENT ==========
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(supabase_url, supabase_key)
+
+logger.info(f"Supabase client initialized: {supabase_url is not None}")
+
 
 app = FastAPI(
     title="Social Workout App - CV API",
@@ -39,6 +54,7 @@ app.add_middleware(
 class DetectRequest(BaseModel):
     """Request body for workout detection"""
     image_url: HttpUrl = Field(..., description="Public URL of the workout photo")
+    user_id: str = Field("00000000-0000-0000-0000-000000000000", description="User ID for tracking the workout")
     mock: bool = Field(False, description="Use mock mode for demo safety")
     include_raw: bool = Field(False, description="Include raw model outputs in response")
 
@@ -47,7 +63,7 @@ class DetectResponse(BaseModel):
     success: bool
     status_code: int
     message: str
-    data: Optional[Dict[str, Any]] = None   # ✅ Python 3.9 compatible
+    data: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
 
@@ -57,10 +73,26 @@ class HealthResponse(BaseModel):
     status: str
     mock_mode: bool
     version: str
+    supabase_connected: bool
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
 
 
 # ========== HELPER FUNCTIONS ==========
+def resize_image(image_path: str, max_size: int = 1024):
+    """
+    Resize an image to a maximum size while maintaining aspect ratio.
+    Overwrites the original file.
+    """
+    try:
+        img = Image.open(image_path)
+        if img.width > max_size or img.height > max_size:
+            img.thumbnail((max_size, max_size))
+            img.save(image_path, "JPEG", quality=90)
+            logger.info(f"Image resized to fit within a {max_size}x{max_size} box.")
+    except Exception as e:
+        logger.warning(f"Could not resize image {image_path}: {e}")
+
+
 def download_image(url: str, timeout: int = 10) -> str:
     """
     Download image from URL to temp file.
@@ -68,17 +100,14 @@ def download_image(url: str, timeout: int = 10) -> str:
     Raises HTTPException on failure.
     """
     try:
-        # Validate URL is an image
         response = requests.head(url, timeout=5, allow_redirects=True)
         content_type = response.headers.get("content-type", "").lower()
         if not content_type.startswith("image/"):
             raise ValueError(f"URL does not point to an image: {content_type}")
         
-        # Download the image
         response = requests.get(url, timeout=timeout, stream=True)
         response.raise_for_status()
         
-        # Save to temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
             for chunk in response.iter_content(chunk_size=8192):
                 tmp.write(chunk)
@@ -106,10 +135,12 @@ def cleanup_temp_file(file_path: str):
 @app.get("/health", response_model=HealthResponse, tags=["System"])
 async def health_check():
     """Health check endpoint"""
+    from hybrid_3model_cv import MOCK_MODE
     return HealthResponse(
         status="ok",
         mock_mode=MOCK_MODE,
-        version="1.0.0"
+        version="1.0.0",
+        supabase_connected=supabase_url is not None and supabase_key is not None
     )
 
 
@@ -119,43 +150,42 @@ async def detect_workout_from_url(
     background_tasks: BackgroundTasks
 ):
     """
-    Detect workout equipment and background from an image URL.
-    
-    - **image_url**: Public URL of the workout photo (must be accessible)
-    - **mock**: Use mock mode for demo safety (returns fake but consistent results)
-    - **include_raw**: Include raw model outputs in response (debugging)
-    
-    Returns detection results with equipment, background location, and workout type.
+    Detect workout equipment from an image URL and save the result to the database.
     """
-    logger.info(f"Received detection request for: {request.image_url}")
+    logger.info(f"Received detection request for user '{request.user_id}' with URL: {request.image_url}")
     
     try:
-        # Download image to temp file
+        # 1. Download image to a temporary file
         temp_path = download_image(str(request.image_url))
-        
-        # Schedule cleanup after response
         background_tasks.add_task(cleanup_temp_file, temp_path)
         
-        # Override mock mode if requested
-        original_mock = MOCK_MODE
-        if request.mock:
-            import hybrid_3model_cv
-            hybrid_3model_cv.MOCK_MODE = True
+        # 2. Resize the image to prevent "413 Entity Too Large" errors from detection APIs
+        resize_image(temp_path)
+        
+        # 3. Run the detection model
+        result = detect_workout(temp_path, mock=request.mock)
+        
+        # 4. Save the workout record to Supabase
+        status = "passed" if result.get("success") else "failed"
+        detected_items = result.get("detected_items", [])
         
         try:
-            # Run detection
-            result = detect_workout(temp_path)
-            
-        finally:
-            # Restore original mock mode
-            if request.mock:
-                hybrid_3model_cv.MOCK_MODE = original_mock
-        
-        # Remove raw outputs if not requested
+            workout_record = {
+                "user_id": request.user_id,
+                "photo_url": str(request.image_url),
+                "cv_detected_items": detected_items,
+                "status": status,
+                "cv_result_json": result
+            }
+            supabase.table("workouts").insert(workout_record).execute()
+            logger.info(f"Successfully saved workout for user '{request.user_id}' to Supabase.")
+        except Exception as e:
+            logger.error(f"Supabase insert failed: {e}", exc_info=True)
+
+        # 5. Prepare and return the API response
         if not request.include_raw and "raw_outputs" in result:
             del result["raw_outputs"]
-        
-        # Determine status code
+            
         status_code = 200 if result.get("success") else 422
         message = "Detection successful" if result.get("success") else "Detection completed with warnings"
         
@@ -167,14 +197,13 @@ async def detect_workout_from_url(
         )
         
     except HTTPException as e:
-        # Re-raise FastAPI HTTP exceptions
         raise e
     except Exception as e:
-        logger.error(f"Detection failed: {e}", exc_info=True)
+        logger.error(f"Critical error in detection endpoint: {e}", exc_info=True)
         return DetectResponse(
             success=False,
             status_code=500,
-            message="Internal server error during detection",
+            message="An internal server error occurred during detection.",
             error=str(e)
         )
 
@@ -184,7 +213,6 @@ async def get_supported_classes():
     """Return all equipment classes this API recognizes"""
     from hybrid_3model_cv import GYM_CLASSES, COCO_FALLBACK_CLASSES, LOCATION_MAP
     
-    # Group equipment by category
     equipment_by_category = {}
     for cls, category in {**GYM_CLASSES, **COCO_FALLBACK_CLASSES}.items():
         if category not in equipment_by_category:
@@ -204,49 +232,12 @@ async def mock_detect_endpoint(request: DetectRequest):
     Return mock detection results for frontend testing.
     Always returns success with fake but realistic data.
     """
-    # Use filename from URL for mock matching
-    image_name = Path(request.image_url.path).name.lower()
-    
-    # Simple mock logic (same as hybrid_3model_cv.py)
-    if any(kw in image_name for kw in ["dumbbell", "weight", "bench"]):
-        detections = [
-            {"class": "Dumbbell", "confidence": 0.92, "category": "strength", "source": "mock"},
-            {"class": "person", "confidence": 0.98, "category": "person", "source": "mock"}
-        ]
-        background = {"location": "commercial_gym", "confidence": 0.85, "source": "mock"}
-        workout = "💪 Strength (Dumbbell)"
-    elif any(kw in image_name for kw in ["treadmill", "elliptical", "bike"]):
-        detections = [
-            {"class": "Treadmill", "confidence": 0.89, "category": "cardio", "source": "mock"},
-            {"class": "person", "confidence": 0.96, "category": "person", "source": "mock"}
-        ]
-        background = {"location": "commercial_gym", "confidence": 0.90, "source": "mock"}
-        workout = "🏃 Cardio (Treadmill)"
-    elif any(kw in image_name for kw in ["yoga", "mat", "stability"]):
-        detections = [
-            {"class": "Stability Ball", "confidence": 0.86, "category": "flexibility", "source": "mock"},
-            {"class": "person", "confidence": 0.97, "category": "person", "source": "mock"}
-        ]
-        background = {"location": "home", "confidence": 0.70, "source": "mock"}
-        workout = "🧘 Flexibility / Core"
-    else:
-        detections = [{"class": "person", "confidence": 0.99, "category": "person", "source": "mock"}]
-        background = {"location": "unknown", "confidence": 0.30, "source": "mock"}
-        workout = "🏋️ General Workout"
-    
+    result = detect_workout("", mock=True)
     return DetectResponse(
         success=True,
         status_code=200,
         message="Mock detection successful",
-        data={
-            "success": True,
-            "image": Path(request.image_url.path).name,
-            "mock_mode": True,
-            "detections": detections,
-            "background": background,
-            "workout_type": workout,
-            "verified": True
-        }
+        data=result
     )
 
 
@@ -278,6 +269,6 @@ if __name__ == "__main__":
         "api:app",
         host="0.0.0.0",
         port=8000,
-        reload=True,  # Auto-reload during development
+        reload=True,
         log_level="info"
     )
