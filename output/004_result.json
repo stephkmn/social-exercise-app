@@ -1,0 +1,34 @@
+{
+  "success": true,
+  "image": "004.jpg",
+  "timestamp": "2026-03-21T18:36:01.016690",
+  "mock_mode": false,
+  "detections": [
+    {
+      "class": "person",
+      "confidence": 0.905,
+      "category": "person",
+      "source": "yolo26n-coco"
+    },
+    {
+      "class": "person",
+      "confidence": 0.901,
+      "category": "person",
+      "source": "yolo26n-coco"
+    },
+    {
+      "class": "person",
+      "confidence": 0.673,
+      "category": "person",
+      "source": "yolo26n-coco"
+    }
+  ],
+  "background": {
+    "location": "unknown",
+    "confidence": 0.3,
+    "source": "fallback",
+    "reasoning": "Insufficient context to determine location"
+  },
+  "workout_type": "\ud83c\udfc3 General Workout",
+  "verified": true
+}

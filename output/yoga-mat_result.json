@@ -1,0 +1,15 @@
+{
+  "success": true,
+  "image": "yoga-mat.jpg",
+  "timestamp": "2026-03-21T18:36:17.179333",
+  "mock_mode": false,
+  "detections": [],
+  "background": {
+    "location": "unknown",
+    "confidence": 0.3,
+    "source": "fallback",
+    "reasoning": "Insufficient context to determine location"
+  },
+  "workout_type": "\u2753 No equipment detected",
+  "verified": false
+}

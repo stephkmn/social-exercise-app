@@ -1,0 +1,46 @@
+{
+  "success": true,
+  "image": "001.jpg",
+  "timestamp": "2026-03-21T18:35:58.579312",
+  "mock_mode": false,
+  "detections": [
+    {
+      "class": "person",
+      "confidence": 0.911,
+      "category": "person",
+      "source": "yolo26n-coco"
+    },
+    {
+      "class": "person",
+      "confidence": 0.819,
+      "category": "person",
+      "source": "yolo26n-coco"
+    },
+    {
+      "class": "Dumbbell",
+      "confidence": 0.478,
+      "category": "strength",
+      "source": "unknown"
+    },
+    {
+      "class": "Dumbbell",
+      "confidence": 0.431,
+      "category": "strength",
+      "source": "unknown"
+    },
+    {
+      "class": "person",
+      "confidence": 0.267,
+      "category": "person",
+      "source": "yolo26n-coco"
+    }
+  ],
+  "background": {
+    "location": "unknown",
+    "confidence": 0.3,
+    "source": "fallback",
+    "reasoning": "Insufficient context to determine location"
+  },
+  "workout_type": "\ud83d\udcaa Strength (Dumbbell, Dumbbell)",
+  "verified": true
+}

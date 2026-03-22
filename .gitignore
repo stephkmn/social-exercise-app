@@ -43,3 +43,6 @@ yarn-error.*
 .idea
 .env
 .vscode
+
+# model
+yolo26n.pt

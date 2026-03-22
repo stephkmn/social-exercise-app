@@ -1,0 +1,557 @@
+{
+  "timestamp": "2026-03-21T18:35:42.640426",
+  "mock_mode": false,
+  "models_used": {
+    "primary": "detect-gym-objects/1",
+    "fallback": "all-gym-equipment/2",
+    "local_yolo": "yolo26n.pt",
+    "scene": "disabled"
+  },
+  "total_images": 18,
+  "results": [
+    {
+      "success": true,
+      "image": "002.jpg",
+      "timestamp": "2026-03-21T18:35:48.322988",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.925,
+          "category": "person",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83c\udfc3 General Workout",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "003.jpg",
+      "timestamp": "2026-03-21T18:35:51.186584",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.923,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "person",
+          "confidence": 0.535,
+          "category": "person",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83c\udfc3 General Workout",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "001.jpg",
+      "timestamp": "2026-03-21T18:35:58.579312",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.911,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "person",
+          "confidence": 0.819,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "Dumbbell",
+          "confidence": 0.478,
+          "category": "strength",
+          "source": "unknown"
+        },
+        {
+          "class": "Dumbbell",
+          "confidence": 0.431,
+          "category": "strength",
+          "source": "unknown"
+        },
+        {
+          "class": "person",
+          "confidence": 0.267,
+          "category": "person",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83d\udcaa Strength (Dumbbell, Dumbbell)",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "004.jpg",
+      "timestamp": "2026-03-21T18:36:01.016690",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.905,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "person",
+          "confidence": 0.901,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "person",
+          "confidence": 0.673,
+          "category": "person",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83c\udfc3 General Workout",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "010.jpg",
+      "timestamp": "2026-03-21T18:36:03.422289",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.933,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "Kettlebells",
+          "confidence": 0.839,
+          "category": "strength",
+          "source": "unknown"
+        },
+        {
+          "class": "Dumbbell",
+          "confidence": 0.492,
+          "category": "strength",
+          "source": "unknown"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83d\udcaa Strength (Kettlebells, Dumbbell)",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "011.jpg",
+      "timestamp": "2026-03-21T18:36:06.916522",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.932,
+          "category": "person",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83c\udfc3 General Workout",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "005.jpg",
+      "timestamp": "2026-03-21T18:36:09.520897",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.925,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "person",
+          "confidence": 0.871,
+          "category": "person",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83c\udfc3 General Workout",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "007.jpg",
+      "timestamp": "2026-03-21T18:36:11.197748",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.927,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "sports ball",
+          "confidence": 0.372,
+          "category": "sports",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "outdoor",
+        "confidence": 0.6,
+        "source": "equipment_inference",
+        "reasoning": "Detected outdoor/sports context"
+      },
+      "workout_type": "\u26bd Sports (sports ball)",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "006.jpg",
+      "timestamp": "2026-03-21T18:36:13.987627",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.851,
+          "category": "person",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83c\udfc3 General Workout",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "yoga-mat.jpg",
+      "timestamp": "2026-03-21T18:36:17.179333",
+      "mock_mode": false,
+      "detections": [],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\u2753 No equipment detected",
+      "verified": false
+    },
+    {
+      "success": true,
+      "image": "IMG_5450.jpg",
+      "timestamp": "2026-03-21T18:36:21.834118",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.828,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "treadmill",
+          "confidence": 0.43,
+          "category": "cardio",
+          "source": "unknown"
+        },
+        {
+          "class": "chair",
+          "confidence": 0.416,
+          "category": "home_context",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "chair",
+          "confidence": 0.383,
+          "category": "home_context",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83c\udfc3 Cardio (treadmill)",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "cat.jpg",
+      "timestamp": "2026-03-21T18:36:24.213306",
+      "mock_mode": false,
+      "detections": [],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\u2753 No equipment detected",
+      "verified": false
+    },
+    {
+      "success": true,
+      "image": "woman-in-gym.jpg",
+      "timestamp": "2026-03-21T18:36:33.600504",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.93,
+          "category": "person",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83c\udfc3 General Workout",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "IMG_5301.jpg",
+      "timestamp": "2026-03-21T18:36:38.426165",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.83,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "person",
+          "confidence": 0.792,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "person",
+          "confidence": 0.418,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "person",
+          "confidence": 0.309,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "skateboard",
+          "confidence": 0.303,
+          "category": "sports",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "person",
+          "confidence": 0.279,
+          "category": "person",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "outdoor",
+        "confidence": 0.6,
+        "source": "equipment_inference",
+        "reasoning": "Detected outdoor/sports context"
+      },
+      "workout_type": "\u26bd Sports (skateboard)",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "IMG_0828.jpg",
+      "timestamp": "2026-03-21T18:36:44.724091",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.525,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "person",
+          "confidence": 0.341,
+          "category": "person",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83c\udfc3 General Workout",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "008.jpg",
+      "timestamp": "2026-03-21T18:36:46.257667",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.928,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "bottle",
+          "confidence": 0.91,
+          "category": "context",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "bottle",
+          "confidence": 0.826,
+          "category": "context",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "bottle",
+          "confidence": 0.396,
+          "category": "context",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "person",
+          "confidence": 0.343,
+          "category": "person",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "commercial_gym",
+        "confidence": 0.8,
+        "source": "equipment_inference",
+        "reasoning": "Detected commercial gym equipment"
+      },
+      "workout_type": "\ud83c\udfc3 General Workout",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "009.jpg",
+      "timestamp": "2026-03-21T18:36:47.898618",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "person",
+          "confidence": 0.904,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "person",
+          "confidence": 0.865,
+          "category": "person",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83c\udfc3 General Workout",
+      "verified": true
+    },
+    {
+      "success": true,
+      "image": "dumbbells-in-gym.jpg",
+      "timestamp": "2026-03-21T18:36:50.491328",
+      "mock_mode": false,
+      "detections": [
+        {
+          "class": "Dumbbell",
+          "confidence": 0.429,
+          "category": "strength",
+          "source": "unknown"
+        },
+        {
+          "class": "person",
+          "confidence": 0.34,
+          "category": "person",
+          "source": "yolo26n-coco"
+        },
+        {
+          "class": "bench",
+          "confidence": 0.284,
+          "category": "strength",
+          "source": "yolo26n-coco"
+        }
+      ],
+      "background": {
+        "location": "unknown",
+        "confidence": 0.3,
+        "source": "fallback",
+        "reasoning": "Insufficient context to determine location"
+      },
+      "workout_type": "\ud83d\udcaa Strength (Dumbbell, bench)",
+      "verified": true
+    }
+  ]
+}

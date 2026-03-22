@@ -1,0 +1,34 @@
+{
+  "success": true,
+  "image": "dumbbells-in-gym.jpg",
+  "timestamp": "2026-03-21T18:36:50.491328",
+  "mock_mode": false,
+  "detections": [
+    {
+      "class": "Dumbbell",
+      "confidence": 0.429,
+      "category": "strength",
+      "source": "unknown"
+    },
+    {
+      "class": "person",
+      "confidence": 0.34,
+      "category": "person",
+      "source": "yolo26n-coco"
+    },
+    {
+      "class": "bench",
+      "confidence": 0.284,
+      "category": "strength",
+      "source": "yolo26n-coco"
+    }
+  ],
+  "background": {
+    "location": "unknown",
+    "confidence": 0.3,
+    "source": "fallback",
+    "reasoning": "Insufficient context to determine location"
+  },
+  "workout_type": "\ud83d\udcaa Strength (Dumbbell, bench)",
+  "verified": true
+}
