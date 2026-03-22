@@ -172,6 +172,21 @@ async def detect_workout_from_upload(
         status_code = 200 if result.get("success") else 422
         message = "Detection successful" if result.get("success") else "Detection completed with warnings"
 
+        if status_code == 200 and not mock:
+            # Insert workout record to Supabase
+            data, error = supabase.table('workouts').insert({
+                "user_id": "00000000-0000-0000-0000-000000000000",
+                "photo_url": public_url,
+                "status": "passed",
+                "cv_detected_items": [item["class"] for item in result["detections"]],
+                "cv_result_json": result  # Python dict will auto-serialize to JSON
+            }).execute()
+            
+            if error:
+                logger.error(f"❌ Failed to save workout to database: {error}")
+            else:
+                logger.info(f"✅ Workout saved to database: {data}")
+
         return DetectResponse(
             success=result.get("success", False),
             status_code=status_code,
