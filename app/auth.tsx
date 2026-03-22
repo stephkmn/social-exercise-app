@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../lib/supabase';
+import { useRouter } from 'expo-router'; // Added useRouter import
 
 type AuthMode = 'signin' | 'signup';
 
@@ -26,6 +27,7 @@ export default function AuthScreen() {
 
   const colorScheme = useColorScheme();
   const styles = getStyles(colorScheme);
+  const router = useRouter(); // Initialized useRouter
 
   const handleSignUp = async () => {
     if (password !== confirmPassword) {
@@ -64,8 +66,8 @@ export default function AuthScreen() {
 
   const handleSignIn = async () => {
     setLoading(true);
-    // TODO: Implement Sign In
-    Alert.alert('TODO', 'Sign in functionality not yet implemented.');
+    // Navigate to the feed page
+    router.replace('/'); // Changed to navigate to /
     setLoading(false);
   };
 
