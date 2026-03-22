@@ -1,9 +1,9 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
-import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
+import React, { useRef, useState } from 'react';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CameraPage() {
   const [facing, setFacing] = useState<CameraType>('back');
@@ -89,25 +89,6 @@ export default function CameraPage() {
 
         <View style={styles.viewfinder}>
           <CameraView ref={cameraRef} style={{ flex: 1 }} facing={facing}>
-            {/* Grid overlay */}
-            <View style={StyleSheet.absoluteFill}>
-              <View style={styles.gridRow}>
-                <View style={[styles.gridCell, styles.borderRight, styles.borderBottom]} />
-                <View style={[styles.gridCell, styles.borderRight, styles.borderBottom]} />
-                <View style={[styles.gridCell, styles.borderBottom]} />
-              </View>
-              <View style={styles.gridRow}>
-                <View style={[styles.gridCell, styles.borderRight, styles.borderBottom]} />
-                <View style={[styles.gridCell, styles.borderRight, styles.borderBottom]} />
-                <View style={[styles.gridCell, styles.borderBottom]} />
-              </View>
-              <View style={styles.gridRow}>
-                <View style={[styles.gridCell, styles.borderRight]} />
-                <View style={[styles.gridCell, styles.borderRight]} />
-                <View style={styles.gridCell} />
-              </View>
-            </View>
-
             <Text style={styles.hint}>Show up. Snap. Done.</Text>
           </CameraView>
         </View>
