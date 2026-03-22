@@ -47,3 +47,5 @@ yarn-error.*
 # model
 yolo26n.pt
 /scripts/test-images/
+
+/scripts/__pycache__

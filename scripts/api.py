@@ -28,7 +28,7 @@ BUCKET_NAME = os.environ["BUCKET_NAME"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Import your detection function
-from hybrid_3model_cv import detect_workout
+from hybrid_3model_cv import MOCK_MODE, detect_workout
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
