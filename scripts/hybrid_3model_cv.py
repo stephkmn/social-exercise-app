@@ -558,9 +558,10 @@ def mock_detect_all(image_path: str) -> dict:
     }
 
 
-def detect_workout(image_path: str) -> dict:
+def detect_workout(image_path: str, mock: bool = False) -> dict:
     """
     Main detection function.
+    Accepts a 'mock' parameter to override global MOCK_MODE.
     
     Returns JSON with SEPARATE fields:
     - "detections": list of equipment detected (custom + COCO classes)
@@ -569,7 +570,10 @@ def detect_workout(image_path: str) -> dict:
     print(f"\n📸 Processing: {Path(image_path).name}")
     print("-" * 70)
     
-    if MOCK_MODE:
+    # Prioritize the 'mock' parameter passed to the function
+    is_mock = mock or MOCK_MODE
+    
+    if is_mock:
         mock_result = mock_detect_all(image_path)
         equipment_detections = mock_result["equipment"]
         background_info = mock_result["background"]
@@ -613,7 +617,7 @@ def detect_workout(image_path: str) -> dict:
         "success": True,
         "image": Path(image_path).name,
         "timestamp": datetime.now().isoformat(),
-        "mock_mode": MOCK_MODE,
+        "mock_mode": is_mock,
         
         # 🔹 SEPARATE FIELD: Equipment detections (custom + COCO classes)
         "detections": sorted(
