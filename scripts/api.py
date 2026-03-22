@@ -64,7 +64,7 @@ app.add_middleware(
 class DetectRequest(BaseModel):
     """Request body for workout detection"""
     image_url: HttpUrl = Field(..., description="Public URL of the workout photo")
-    user_id: str = Field("00000000-0000-0000-0000-000000000000", description="User ID for tracking the workout")
+    user_id: str = Field("5d01d24e-32cd-4bd2-ac05-4c4a442d8927", description="User ID for tracking the workout")
     mock: bool = Field(False, description="Use mock mode for demo safety")
     include_raw: bool = Field(False, description="Include raw model outputs in response")
 
@@ -175,7 +175,7 @@ async def detect_workout_from_upload(
         if status_code == 200 and not mock:
             # Insert workout record to Supabase
             data, error = supabase.table('workouts').insert({
-                "user_id": "00000000-0000-0000-0000-000000000000",
+                "user_id": user_id, # Use the user_id from the request
                 "photo_url": public_url,
                 "status": "passed",
                 "cv_detected_items": [item["class"] for item in result["detections"]],

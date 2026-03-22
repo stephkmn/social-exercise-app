@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { supabase } from '../../lib/supabase'; // Added supabase import
 
 const devHost = Constants.expoConfig?.hostUri?.split(':').shift();
 const API_BASE_URL = devHost ? `http://${devHost}:8000` : 'http://localhost:8000';
@@ -41,7 +42,9 @@ export default function CameraPage() {
         const file = new File([blob], 'workout.jpg', { type: 'image/jpeg' });
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('user_id', 'default');
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id || '5d01d24e-32cd-4bd2-ac05-4c4a442d8927'; // Use authenticated user ID or the previous hardcoded default
+        formData.append('user_id', userId);
         console.log('[upload] sending web fetch...');
         const res = await fetch(`${API_BASE_URL}/detect`, { method: 'POST', body: formData });
         status = res.status;
@@ -49,7 +52,9 @@ export default function CameraPage() {
       } else {
         const formData = new FormData();
         formData.append('file', { uri: photo, name: 'workout.jpg', type: 'image/jpeg' } as any);
-        formData.append('user_id', 'default');
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id || '5d01d24e-32cd-4bd2-ac05-4c4a442d8927'; // Use authenticated user ID or the previous hardcoded default
+        formData.append('user_id', userId);
         console.log('[upload] sending native fetch...');
         const res = await fetch(`${API_BASE_URL}/detect`, { method: 'POST', body: formData });
         console.log('[upload] response status:', res.status);
