@@ -12,6 +12,7 @@ from typing import Optional, List, Dict, Any
 import os
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from PIL import Image
 
 # Load environment variables from .env file
 load_dotenv()
@@ -53,7 +54,7 @@ app.add_middleware(
 class DetectRequest(BaseModel):
     """Request body for workout detection"""
     image_url: HttpUrl = Field(..., description="Public URL of the workout photo")
-    user_id: str = Field("default", description="User ID for tracking the workout")
+    user_id: str = Field("00000000-0000-0000-0000-000000000000", description="User ID for tracking the workout")
     mock: bool = Field(False, description="Use mock mode for demo safety")
     include_raw: bool = Field(False, description="Include raw model outputs in response")
 
@@ -77,6 +78,21 @@ class HealthResponse(BaseModel):
 
 
 # ========== HELPER FUNCTIONS ==========
+def resize_image(image_path: str, max_size: int = 1024):
+    """
+    Resize an image to a maximum size while maintaining aspect ratio.
+    Overwrites the original file.
+    """
+    try:
+        img = Image.open(image_path)
+        if img.width > max_size or img.height > max_size:
+            img.thumbnail((max_size, max_size))
+            img.save(image_path, "JPEG", quality=90)
+            logger.info(f"Image resized to fit within a {max_size}x{max_size} box.")
+    except Exception as e:
+        logger.warning(f"Could not resize image {image_path}: {e}")
+
+
 def download_image(url: str, timeout: int = 10) -> str:
     """
     Download image from URL to temp file.
@@ -143,13 +159,15 @@ async def detect_workout_from_url(
         temp_path = download_image(str(request.image_url))
         background_tasks.add_task(cleanup_temp_file, temp_path)
         
-        # 2. Run the detection model
-        # The 'mock' parameter is passed directly to the detection function
+        # 2. Resize the image to prevent "413 Entity Too Large" errors from detection APIs
+        resize_image(temp_path)
+        
+        # 3. Run the detection model
         result = detect_workout(temp_path, mock=request.mock)
         
-        # 3. Save the workout record to Supabase
+        # 4. Save the workout record to Supabase
         status = "passed" if result.get("success") else "failed"
-        detected_items = [d.get("class") for d in result.get("detections", [])]
+        detected_items = result.get("detected_items", [])
         
         try:
             workout_record = {
@@ -157,16 +175,14 @@ async def detect_workout_from_url(
                 "photo_url": str(request.image_url),
                 "cv_detected_items": detected_items,
                 "status": status,
-                "cv_result_json": result  # Store the full JSON for debugging/future use
+                "cv_result_json": result
             }
             supabase.table("workouts").insert(workout_record).execute()
             logger.info(f"Successfully saved workout for user '{request.user_id}' to Supabase.")
         except Exception as e:
-            # Log the error but don't fail the entire request.
-            # This ensures the user gets detection results even if the DB save fails.
             logger.error(f"Supabase insert failed: {e}", exc_info=True)
 
-        # 4. Prepare and return the API response
+        # 5. Prepare and return the API response
         if not request.include_raw and "raw_outputs" in result:
             del result["raw_outputs"]
             
@@ -181,7 +197,6 @@ async def detect_workout_from_url(
         )
         
     except HTTPException as e:
-        # Re-raise exceptions that are already proper HTTP responses
         raise e
     except Exception as e:
         logger.error(f"Critical error in detection endpoint: {e}", exc_info=True)
@@ -211,9 +226,6 @@ async def get_supported_classes():
     }
 
 
-# Note: The /detect/mock endpoint is now redundant, as mock behavior is handled
-# by the main /detect endpoint via the `mock: true` flag. It can be kept for
-# simplicity for frontend developers or removed. I will leave it for now.
 @app.post("/detect/mock", response_model=DetectResponse, status_code=200, tags=["Testing"])
 async def mock_detect_endpoint(request: DetectRequest):
     """

@@ -613,22 +613,25 @@ def detect_workout(image_path: str, mock: bool = False) -> dict:
         workout_type = infer_workout_type(equipment_detections)
     
     # === BUILD FINAL RESULT WITH SEPARATE FIELDS ===
+    # ✅ NEW: Create a simple list of detected item names for Supabase
+    detected_item_names = sorted(list(set([d.get("class") for d in equipment_detections])))
+
     result = {
         "success": True,
         "image": Path(image_path).name,
         "timestamp": datetime.now().isoformat(),
         "mock_mode": is_mock,
         
-        # 🔹 SEPARATE FIELD: Equipment detections (custom + COCO classes)
+        # The original, detailed list of detection objects
         "detections": sorted(
             equipment_detections, 
             key=lambda x: -x["confidence"]
         ),
         
-        # 🔹 SEPARATE FIELD: Background/location info (distinct from detections)
-        "background": background_info,
+        # ✅ NEW: The simple list of strings for Supabase
+        "detected_items": detected_item_names,
         
-        # Derived fields
+        "background": background_info,
         "workout_type": workout_type,
         "verified": any(d["class"].lower() == "person" for d in equipment_detections)
     }
