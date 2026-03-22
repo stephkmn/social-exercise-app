@@ -8,6 +8,7 @@ import requests
 import shutil
 import logging
 from datetime import datetime
+from typing import Optional, List, Dict, Any
 
 # Import your detection function
 from hybrid_3model_cv import detect_workout, MOCK_MODE
@@ -43,12 +44,11 @@ class DetectRequest(BaseModel):
 
 
 class DetectResponse(BaseModel):
-    """Standardized response structure"""
     success: bool
     status_code: int
     message: str
-    data: dict | None = None
-    error: str | None = None
+    data: Optional[Dict[str, Any]] = None   # ✅ Python 3.9 compatible
+    error: Optional[str] = None
     timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
 
 

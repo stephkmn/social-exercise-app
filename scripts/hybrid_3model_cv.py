@@ -90,16 +90,10 @@ GYM_CLASSES = {
     
     # Flexibility / Core
     "Stability Ball": "flexibility",
-    
-    # Person (for verification)
-    "person": "person",
 }
 
 # ===== COCO FALLBACK CLASSES (Context/Secondary Detection) =====
 COCO_FALLBACK_CLASSES = {
-    # Verification
-    "person": "person",
-    
     # Strength/Outdoor context
     "bench": "strength",  # Gym bench OR park bench
     
