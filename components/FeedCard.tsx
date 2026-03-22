@@ -23,7 +23,7 @@ interface FeedCardProps {
 
 export function FeedCard({ item }: FeedCardProps) {
   const userName = item.users ? item.users.display_name : 'Anonymous';
-  const avatarUrl = item.users ? item.users.avatar_url : '🤷';
+  const hasAvatar = item.users && item.users.avatar_url;
 
   return (
     <View style={styles.card}>
@@ -31,7 +31,11 @@ export function FeedCard({ item }: FeedCardProps) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{avatarUrl}</Text>
+            {hasAvatar ? (
+              <Image source={{ uri: item.users.avatar_url }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>🤷</Text>
+            )}
           </View>
           <View>
             <Text style={styles.userName}>{userName}</Text>
@@ -99,6 +103,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#faf8f5',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   avatarText: { fontSize: 20 },
   userName: { fontSize: 13, fontWeight: '600', color: '#1e293b' },

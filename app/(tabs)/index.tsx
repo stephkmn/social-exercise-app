@@ -18,7 +18,7 @@ export default function FeedPage() {
             created_at,
             photo_url,
             cv_detected_items,
-            users (
+            users:user_id (
               id,
               display_name,
               avatar_url
